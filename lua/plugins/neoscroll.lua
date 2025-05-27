@@ -1,5 +1,5 @@
 return {
   "karb94/neoscroll.nvim",
-  enabled = false,
+  enabled = true,
   opts = {},
 }

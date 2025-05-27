@@ -8,6 +8,14 @@ vim.g.maplocalleader = "\\"
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.splitright = true;
+vim.opt.clipboard = 'unnamedplus'
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "help",
+  callback = function()
+    vim.cmd("wincmd L") -- Move help window to the right
+  end,
+})
 
 -- lazy
 require("config.lazy")
