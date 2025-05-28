@@ -9,6 +9,7 @@ vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.splitright = true;
 vim.opt.clipboard = 'unnamedplus'
+vim.o.scrolloff = 6
 
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "help",
@@ -21,12 +22,16 @@ vim.api.nvim_create_autocmd("FileType", {
 require("config.lazy")
 vim.keymap.set({"n", "i"}, "<leader>gg", ":LazyGit<CR>")
 
+-- Mason
+local Mason = require("mason")
+Mason.setup()
+
 -- default config netrw
 require("netrw").setup({})
 
 -- "tree navigation"
 require('mini.files').setup()
-vim.keymap.set({"n"}, "<leader>gt", MiniFiles.open)
+vim.keymap.set({"n"}, "<leader>t", MiniFiles.open)
 
 -- Telescope
 local builtin = require('telescope.builtin')
