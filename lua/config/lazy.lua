@@ -21,5 +21,3 @@ require("lazy").setup({ spec = {
   },
   checker = { enabled = true, notify = false },
 })
-
-require('nvim-treesitter.configs').setup({ highlight = { enable = true } })
