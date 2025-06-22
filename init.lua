@@ -33,6 +33,29 @@ require("netrw").setup({})
 require('mini.files').setup()
 vim.keymap.set({"n"}, "<leader>t", MiniFiles.open)
 
+-- Toggle zen mode
+local zenmode = require("zen-mode")
+zenmode.setup({
+	on_open = function(_)
+		vim.cmd("cabbrev <buffer> q let b:quitting = 1 <bar> q")
+		vim.cmd("cabbrev <buffer> wq let b:quitting = 1 <bar> wq")
+	end,
+	on_close = function()
+		if vim.b.quitting == 1 then
+			vim.b.quitting = 0
+			vim.cmd("q")
+		end
+	end,
+})
+vim.keymap.set("n", "<leader>tz", zenmode.toggle, { desc = "Toggle zen mode" })
+vim.api.nvim_create_autocmd("VimEnter", {
+	callback = function()
+		require("zen-mode").toggle()
+	end,
+})
+
+-- lsp
+
 -- Telescope
 local builtin = require('telescope.builtin')
 vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Telescope find files' })
