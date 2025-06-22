@@ -30,9 +30,6 @@ require("nvim-treesitter.configs").setup({ highlight = { enable = true } })
 local Mason = require("mason")
 Mason.setup()
 
--- default config netrw
-require("netrw").setup({})
-
 -- "tree navigation"
 require("mini.files").setup()
 vim.keymap.set({ "n" }, "<leader>om", MiniFiles.open)
