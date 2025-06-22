@@ -30,8 +30,45 @@ require("nvim-treesitter.configs").setup({ highlight = { enable = true } })
 local Mason = require("mason")
 Mason.setup()
 
+local function request_ts_tools_sync(...)
+  local clients = vim.lsp.get_active_clients({ name = "typescript-tools" })
+  local client = clients[1]
+
+  if not client then
+    return "No LSP client found", nil
+  end
+
+  local result = client.request_sync("workspace/willRenameFiles", ...)
+
+  return result.error, result.result
+end
+
 -- "tree navigation"
 require("mini.files").setup()
+vim.api.nvim_create_autocmd("User", {
+  group = vim.api.nvim_create_augroup("__mini", { clear = true }),
+  pattern = "MiniFilesActionRename",
+  callback = function(params)
+    -- implementation based in typescript-tools rename funcionality
+    local from = vim.uri_from_fname(params.data.from)
+    local to = vim.uri_from_fname(params.data.to)
+
+    local err, result = request_ts_tools_sync({
+      files = {
+        {
+          oldUri = from,
+          newUri = to,
+        },
+      },
+    })
+
+    if err then
+      error(err)
+    else
+      vim.lsp.util.apply_workspace_edit(result or {}, "utf-8")
+    end
+  end,
+})
 vim.keymap.set({ "n" }, "<leader>om", MiniFiles.open)
 
 -- Toggle zen mode
@@ -71,19 +108,29 @@ end
 local lspconfig = require("lspconfig")
 
 -- Set up Biome LSP server configuration
-lspconfig.ts_ls.setup({
-  on_attach = function(client, bufnr)
-    setup_format_on_save(client, bufnr)
-  end,
-  settings = {
-    -- Define Biome-specific settings here
-    -- For example, if you have specific checks, you can pass them as config
-    biome = {
-      checkOnSave = true,
-      lint = true,
-    },
-  },
-})
+--lspconfig.ts_ls.setup({
+--  filetypes = {
+--    "javascript",
+--    "javascriptreact",
+--    "javascript.jsx",
+--    "typescript",
+--    "typescriptreact",
+--    "typescript.tsx",
+--  },
+--  root_markers = { "tsconfig.json", "jsconfig.json", "package.json", ".git" },
+--  on_attach = function(client, bufnr)
+--    print("ts lsp attached")
+--    setup_format_on_save(client, bufnr)
+--  end,
+--  settings = {
+--    -- Define Biome-specific settings here
+--    -- For example, if you have specific checks, you can pass them as config
+--    biome = {
+--      checkOnSave = true,
+--      lint = true,
+--    },
+--  },
+--})
 
 lspconfig.elixirls.setup({
   cmd = { "/path/to/elixir-ls/language_server.sh" }, -- 👈 Update this path!
@@ -230,6 +277,8 @@ vim.keymap.set("n", "<leader>snc", function()
   tlscope_builtin.find_files({ cwd = vim.fn.stdpath("config") })
 end, { desc = "[S]earch [N]eovim [C]onfig" })
 
+require("typescript-tools").setup({})
+
 -- other lsp config
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup("kickstart-lsp-attach", { clear = true }),
@@ -247,6 +296,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
     map("lr", vim.lsp.buf.rename, "[L]sp [R]ename")
     map("la", vim.lsp.buf.code_action, "[L]SP Code [A]ction", { "n", "x" })
     map("ld", vim.lsp.buf.declaration, "[L]SP [D]eclaration")
+    map("lmf", function()
+      require("typescript-tools.api").rename_file()
+    end, "[L]SP [M]ove to [F]ile")
 
     map("sd", tlscope_builtin.lsp_definitions, "Tele[S]cope [D]efinition")
     map("sr", tlscope_builtin.lsp_references, "Tele[S]cope [R]eferences")
@@ -371,3 +423,5 @@ function EditFromLazygit(file_path)
     vim.cmd("e " .. file_path)
   end
 end
+
+vim.deprecate = function(...) end
