@@ -40,11 +40,20 @@ local function request_ts_tools_sync(...)
 
   local result = client.request_sync("workspace/willRenameFiles", ...)
 
-  return result.error, result.result
+  return result and result.error, result and result.result
 end
 
 -- "tree navigation"
 require("mini.files").setup()
+vim.keymap.set("n", "<leader>oM", function()
+  local buf_path = vim.api.nvim_buf_get_name(0)
+  if not buf_path or buf_path == "" then
+    require("mini.files").open()
+  else
+    local dir = vim.fn.fnamemodify(buf_path, ":p:h")
+    require("mini.files").open(dir)
+  end
+end)
 vim.api.nvim_create_autocmd("User", {
   group = vim.api.nvim_create_augroup("__mini", { clear = true }),
   pattern = "MiniFilesActionRename",
@@ -257,7 +266,7 @@ vim.keymap.set(
 )
 vim.keymap.set(
   "n",
-  "<leader>sb",
+  "<leader>sz",
   tlscope_builtin.builtin,
   { desc = "Tele[S]cope list [B]uiltins" }
 )
