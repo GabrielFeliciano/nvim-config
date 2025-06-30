@@ -12,6 +12,7 @@ vim.opt.clipboard = "unnamedplus"
 vim.opt.tabstop = 2
 vim.o.scrolloff = 6
 vim.cmd.colorscheme("habamax")
+vim.keymap.set("n", "<leader>p", '"_dP')
 
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "help",
@@ -45,7 +46,7 @@ end
 
 -- "tree navigation"
 require("mini.files").setup()
-vim.keymap.set("n", "<leader>oM", function()
+vim.keymap.set("n", "<leader>om", function()
   local buf_path = vim.api.nvim_buf_get_name(0)
   if not buf_path or buf_path == "" then
     require("mini.files").open()
@@ -78,7 +79,7 @@ vim.api.nvim_create_autocmd("User", {
     end
   end,
 })
-vim.keymap.set({ "n" }, "<leader>om", MiniFiles.open)
+vim.keymap.set({ "n" }, "<leader>oM", MiniFiles.open)
 
 -- Toggle zen mode
 local zenmode = require("zen-mode")
@@ -95,11 +96,6 @@ zenmode.setup({
   end,
 })
 vim.keymap.set("n", "<leader>tz", zenmode.toggle, { desc = "Toggle zen mode" })
-vim.api.nvim_create_autocmd("VimEnter", {
-  callback = function()
-    require("zen-mode").toggle()
-  end,
-})
 
 -- lsp
 local function setup_format_on_save(client, bufnr)
@@ -115,31 +111,6 @@ local function setup_format_on_save(client, bufnr)
 end
 
 local lspconfig = require("lspconfig")
-
--- Set up Biome LSP server configuration
---lspconfig.ts_ls.setup({
---  filetypes = {
---    "javascript",
---    "javascriptreact",
---    "javascript.jsx",
---    "typescript",
---    "typescriptreact",
---    "typescript.tsx",
---  },
---  root_markers = { "tsconfig.json", "jsconfig.json", "package.json", ".git" },
---  on_attach = function(client, bufnr)
---    print("ts lsp attached")
---    setup_format_on_save(client, bufnr)
---  end,
---  settings = {
---    -- Define Biome-specific settings here
---    -- For example, if you have specific checks, you can pass them as config
---    biome = {
---      checkOnSave = true,
---      lint = true,
---    },
---  },
---})
 
 lspconfig.elixirls.setup({
   cmd = { "/path/to/elixir-ls/language_server.sh" }, -- 👈 Update this path!
@@ -188,10 +159,10 @@ conform = require("conform")
 conform.setup({
   formatters_by_ft = {
     lua = { "stylua" },
-    javascript = { "prettier_eslint_combo" },
-    typescript = { "prettier_eslint_combo" },
-    javascriptreact = { "prettier_eslint_combo" },
-    typescriptreact = { "prettier_eslint_combo" },
+    javascript = { "eslint" },
+    typescript = { "eslint" },
+    javascriptreact = { "eslint" },
+    typescriptreact = { "eslint" },
   },
   formatters = {
     -- Prettier
@@ -272,7 +243,7 @@ vim.keymap.set(
 )
 vim.keymap.set(
   "n",
-  "<leader>sd",
+  "<leader>sD",
   tlscope_builtin.diagnostics,
   { desc = "Tele[S]cope [D]iagnostics" }
 )
@@ -286,7 +257,26 @@ vim.keymap.set("n", "<leader>snc", function()
   tlscope_builtin.find_files({ cwd = vim.fn.stdpath("config") })
 end, { desc = "[S]earch [N]eovim [C]onfig" })
 
-require("typescript-tools").setup({})
+require("typescript-tools").setup({
+  filetypes = {
+    "javascript",
+    "javascriptreact",
+    "javascript.jsx",
+    "typescript",
+    "typescriptreact",
+    "typescript.tsx",
+  },
+  root_markers = { "tsconfig.json", "jsconfig.json", "package.json", ".git" },
+  on_attach = function(client, bufnr)
+    setup_format_on_save(client, bufnr)
+  end,
+})
+
+vim.lsp.config("biome", {})
+vim.lsp.enable("biome")
+
+vim.lsp.config("eslint", {})
+vim.lsp.enable("eslint")
 
 -- other lsp config
 vim.api.nvim_create_autocmd("LspAttach", {
@@ -302,32 +292,45 @@ vim.api.nvim_create_autocmd("LspAttach", {
       )
     end
 
-    map("lr", vim.lsp.buf.rename, "[L]sp [R]ename")
-    map("la", vim.lsp.buf.code_action, "[L]SP Code [A]ction", { "n", "x" })
-    map("ld", vim.lsp.buf.declaration, "[L]SP [D]eclaration")
-    map("lmf", function()
+    map("<leader>lr", vim.lsp.buf.rename, "[L]sp [R]ename")
+    map(
+      "<leader>la",
+      vim.lsp.buf.code_action,
+      "[L]SP Code [A]ction",
+      { "n", "x" }
+    )
+    map("<leader>ld", vim.lsp.buf.declaration, "[L]SP [D]eclaration")
+    map("<leader>lmf", function()
       require("typescript-tools.api").rename_file()
     end, "[L]SP [M]ove to [F]ile")
 
-    map("sd", tlscope_builtin.lsp_definitions, "Tele[S]cope [D]efinition")
-    map("sr", tlscope_builtin.lsp_references, "Tele[S]cope [R]eferences")
     map(
-      "si",
+      "<leader>sd",
+      tlscope_builtin.lsp_definitions,
+      "Tele[S]cope [D]efinition"
+    )
+    map(
+      "<leader>sr",
+      tlscope_builtin.lsp_references,
+      "Tele[S]cope [R]eferences"
+    )
+    map(
+      "<leader>si",
       tlscope_builtin.lsp_implementations,
       "Tele[S]cope [I]mplementation"
     )
     map(
-      "ssd",
+      "<leader>ssd",
       tlscope_builtin.lsp_document_symbols,
       "Tele[S]cope [D]ocument [S]ymbols"
     )
     map(
-      "ssw",
+      "<leader>ssw",
       tlscope_builtin.lsp_dynamic_workspace_symbols,
       "Tele[S]cope [W]orkspace [S]ymbols"
     )
     map(
-      "st",
+      "<leader>st",
       tlscope_builtin.lsp_type_definitions,
       "Tele[S]cope [T]ype [D]efinition"
     )
@@ -434,3 +437,12 @@ function EditFromLazygit(file_path)
 end
 
 vim.deprecate = function(...) end
+
+-- temp
+vim.keymap.set("n", "<leader>od", vim.diagnostic.open_float)
+vim.keymap.set(
+  "n",
+  "<leader>dcb",
+  "<cmd>bd<cr>",
+  { desc = "[D]elete [C]urrent [B]uffer" }
+)
